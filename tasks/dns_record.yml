@@ -7,9 +7,9 @@
     method: POST
     body: 
       data: "{{ item }}"
-      type: TXT
+      type: "TXT"
       name: "_acme-challenge"
-      ttl: 30 # min ttl allowed
+      ttl: "30" # min ttl allowed
     headers:
       Authorization: "Bearer {{ le_do_token }}"
       Content-Type: "application/json"
@@ -26,4 +26,3 @@
     certificate_chain: "{{ lookup('file', le_do_dir_cert + '/' + le_do_domain + '/fullchain.crt') }}"
     oauth_token: "{{ le_do_token }}"
   when: le_do_upload
-

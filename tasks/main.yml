@@ -4,9 +4,9 @@
   file:
     path: "{{ item }}"
     state: directory
-    recurse: yes 
+    recurse: yes
     mode: 0755
-  loop: 
+  loop:
     - "{{ le_do_dir_priv }}"
     - "{{ le_do_dir_cert }}/{{ le_do_domain }}"
 
@@ -50,7 +50,7 @@
   copy:
     content: "{{ acme_challenge }}"
     dest: "/tmp/acme-{{ le_do_domain }}.json"
-  when: acme_challenge.changed | bool == true
+  when: acme_challenge.changed
 
 # URI tasks can get messy so using a tasks file
 - name: Import digitalocean dns tasks
@@ -59,7 +59,7 @@
 - name: Wait for dns to propagate
   pause:
     seconds: "{{ le_do_dnswait | default('60') }}"
-  when: acme_challenge.changed | bool == true
+  when: acme_challenge.changed
 
 - name: Verify dns challenge and get cert/chain
   acme_certificate:
@@ -75,5 +75,4 @@
     remaining_days: 60
     data: "{{ acme_challenge }}"
   register: acme_complete
-  when: acme_challenge.changed | bool == true
-
+  when: acme_challenge.changed
