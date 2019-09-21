@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: letsencrypt_do
+  author: engonzal
+  description: Provision letsencrypt certificates using digitalocean dns
+  license: BSD
+  company: buildahomelab.com
+  min_ansible_version: 2.8
+  galaxy_tags:
+    - digitalocean
+    - letsencrypt
+    - certificate
+    - certificates
+  platforms:
+    - name: Debian
+      versions:
+        - stretch
+        - buster
+    - name: Ubuntu
+      versions:
+        - bionic
+dependencies: []

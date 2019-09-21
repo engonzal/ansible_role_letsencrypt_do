@@ -1,0 +1,79 @@
+---
+# tasks file for engonzal.letsencrypt-do
+- name: Create cert directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: yes 
+    mode: 0755
+  loop: 
+    - "{{ le_do_dir_priv }}"
+    - "{{ le_do_dir_cert }}/{{ le_do_domain }}"
+
+- name: Generate ACME RSA account key
+  openssl_privatekey:
+    path: "{{ le_do_dir_priv }}/account.key"
+
+- name: Generate domain private key
+  openssl_privatekey:
+    path: "{{ le_do_dir_cert }}/{{ le_do_domain }}/private_key.pem"
+
+- name: Generate domain csr
+  openssl_csr:
+    path: "{{ le_do_dir_cert }}/{{ le_do_domain }}/request.csr"
+    privatekey_path: "{{ le_do_dir_cert }}/{{ le_do_domain }}/private_key.pem"
+    subject_alt_name: "DNS:{{ le_do_domain }},DNS:*.{{ le_do_domain }}"
+
+- name: Ensure acme account exists and has email
+  acme_account:
+    account_key_src: "{{ le_do_dir_priv }}/account.key"
+    state: present
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    terms_agreed: yes
+    acme_version: 2
+    contact:
+    - "{{ le_do_mailto }}"
+
+- name: Create dns challenge for {{ le_do_domain }} using account key file
+  acme_certificate:
+    account_key_src: "{{ le_do_dir_priv }}/account.key"
+    account_email: "{{ le_do_mailaddr }}"
+    src: "{{ le_do_dir_cert }}/{{ le_do_domain }}/request.csr"
+    cert: "{{ le_do_dir_cert }}/{{ le_do_domain }}/certificate.crt"
+    challenge: dns-01
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    acme_version: "2"
+    remaining_days: 60
+  register: acme_challenge
+
+- name: Save the acme_challenge data to /tmp
+  copy:
+    content: "{{ acme_challenge }}"
+    dest: "/tmp/acme-{{ le_do_domain }}.json"
+  when: acme_challenge.changed | bool == true
+
+# URI tasks can get messy so using a tasks file
+- name: Import digitalocean dns tasks
+  include_tasks: dns_record.yml
+
+- name: Wait for dns to propagate
+  pause:
+    seconds: "{{ le_do_dnswait | default('60') }}"
+  when: acme_challenge.changed | bool == true
+
+- name: Verify dns challenge and get cert/chain
+  acme_certificate:
+    account_key_src: "{{ le_do_dir_priv }}/account.key"
+    account_email: "{{ le_do_mailaddr }}"
+    src: "{{ le_do_dir_cert }}/{{ le_do_domain }}/request.csr"
+    cert: "{{ le_do_dir_cert }}/{{ le_do_domain }}/certificate.crt"
+    fullchain: "{{ le_do_dir_cert }}/{{ le_do_domain }}/fullchain.crt"
+    chain: "{{ le_do_dir_cert }}/{{ le_do_domain }}/intermediate.crt"
+    challenge: dns-01
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    acme_version: "2"
+    remaining_days: 60
+    data: "{{ acme_challenge }}"
+  register: acme_complete
+  when: acme_challenge.changed | bool == true
+

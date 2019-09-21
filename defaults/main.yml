@@ -1,0 +1,10 @@
+---
+# defaults file for engonzal.letsencrypt-do
+le_do_acme_dir: "https://acme-v02.api.letsencrypt.org/directory"
+
+le_do_dir_priv: "~/data/acme"
+le_do_dir_cert: "~/data/certs"
+le_do_mailaddr: "user@example.com"
+le_do_mailto:  "mailto:{{ le_do_mailaddr }}"
+le_do_domain: example.com
+

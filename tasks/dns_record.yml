@@ -1,0 +1,32 @@
+---
+
+# Documentation for DO API https://developers.digitalocean.com/documentation/v2/#domain-records
+- name: Create DO DNS Challenge Record
+  uri:
+    url: "https://api.digitalocean.com/v2/domains/{{ le_do_domain }}/records"
+    method: POST
+    body: 
+      data: "{{ item }}"
+      type: TXT
+      name: "_acme-challenge"
+      ttl: 30 # min ttl allowed
+    headers:
+      Authorization: "Bearer {{ le_do_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    status_code: "201"
+  register: le_do_record_status
+  tags: do
+  loop: "{{ acme_challenge['challenge_data_dns']['_acme-challenge.' + le_do_domain] }}"
+
+- name: Upload certs to digital ocean
+  digital_ocean_certificate:
+    name: "{{ le_do_domain }}"
+    state: present
+    private_key: "{{ lookup('file', le_do_dir_cert + '/' + le_do_domain + '/private_key.pem') }}"
+    leaf_certificate: "{{ lookup('file', le_do_dir_cert + '/' + le_do_domain + '/certificate.crt') }}"
+    certificate_chain: "{{ lookup('file', le_do_dir_cert + '/' + le_do_domain + '/fullchain.crt') }}"
+    oauth_token: "{{ le_do_token }}"
+  tags: do_upload
+  register: le_do_cert_upload
+
