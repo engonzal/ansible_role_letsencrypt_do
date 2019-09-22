@@ -52,8 +52,8 @@ le_do_upload: true
 - hosts: proxmox
   user: engonzal
   vars:
-    le_do_mailaddr: noe@engonzal.com
-    le_do_domain: engonzal.com
+    le_do_mailaddr: noe@example.com
+    le_do_domain: example.com
     le_do_token: "<your-do-token-consider-using-ansible-vault>"
   roles:
       - engonzal.letsencrypt_do
